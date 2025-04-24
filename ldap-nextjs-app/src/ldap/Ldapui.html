@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LDAP User Management</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 400px; margin: auto; }
+        input, button { display: block; width: 100%; margin: 10px 0; padding: 8px; }
+        button { cursor: pointer; }
+        .status { margin-top: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>LDAP User Management</h2>
+        <button onclick="connectToLDAP()">Connect to LDAP</button>
+        <input type="text" id="searchUser" placeholder="Enter username to search">
+        <button onclick="searchUser()">Search User</button>
+        <input type="text" id="addCN" placeholder="Common Name (CN)">
+        <input type="text" id="addSN" placeholder="Surname (SN)">
+        <input type="email" id="addMail" placeholder="Email">
+        <input type="password" id="addPassword" placeholder="Password">
+        <button onclick="addUser()">Add User</button>
+        <button onclick="disconnectFromLDAP()">Disconnect</button>
+        <p class="status" id="status"></p>
+    </div>
+    
+    <script>
+        async function connectToLDAP() {
+            document.getElementById('status').textContent = "Connecting to LDAP...";
+            try {
+                await fetch('/connect', { method: 'POST' });
+                document.getElementById('status').textContent = "Connected to LDAP.";
+            } catch (error) {
+                document.getElementById('status').textContent = "Connection failed.";
+            }
+        }
+
+        async function searchUser() {
+            const user = document.getElementById('searchUser').value;
+            document.getElementById('status').textContent = "Searching...";
+            const response = await fetch(`/search?user=${user}`);
+            const result = await response.json();
+            document.getElementById('status').textContent = result.exists ? "User found." : "User not found.";
+        }
+
+        async function addUser() {
+            const user = {
+                cn: document.getElementById('addCN').value,
+                sn: document.getElementById('addSN').value,
+                mail: document.getElementById('addMail').value,
+                password: document.getElementById('addPassword').value
+            };
+            document.getElementById('status').textContent = "Adding user...";
+            await fetch('/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(user)
+            });
+            document.getElementById('status').textContent = "User added.";
+        }
+
+        async function disconnectFromLDAP() {
+            document.getElementById('status').textContent = "Disconnecting...";
+            await fetch('/disconnect', { method: 'POST' });
+            document.getElementById('status').textContent = "Disconnected from LDAP.";
+        }
+    </script>
+</body>
+</html>
